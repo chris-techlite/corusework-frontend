@@ -20,13 +20,17 @@
             Check out
                      
             </button>
-            <button disabled v-else><i class="fa-solid fa-cart-shopping"></i>
-            Check out</button>
+            <button disabled v-else><i class="fa-solid fa-cart-shopping"></i>Check out</button>
             <h1 v-text="sitename"></h1>
+            <!-- Search bar -->
+            <div class="search-wrap">
+                <input type="search" v-model.trim="searchTerm" placeholder="Search lessons, location, or description..." aria-label="Search lessons" />
+                <button v-if="searchTerm" v-on:click="searchTerm = ''" title="Clear search">✕</button>
+            </div>
         </header>
         <main>
             <div v-if="showproduct">
-                <div v-for="Product in products">
+                <div v-for="Product in filteredProducts">
                     <!-- <h2 v-for="Product.title"></h2>
                     <button v-on:click="addToCart">Add to cart</button>
                     <span v-if="Product.availableInventory === 0">All Out!</span>
@@ -40,7 +44,7 @@
                 <h2 v-text="Product.title"></h2>
                 <p v-text="Product.description"></p>
                 <p>price: {{Product.price}}</p>
-                <p>Spaces: {{Product.availableInventory - cartCount(Product.id)}}</p>
+                <p>Spaces: {{Product.availableInventory - cartCount(Product)}}</p>
                 <p>location: {{Product.location}}</p>
                 <button v-on:click="addToCart(Product)" v-if="canAddToCart(Product)">Add to cart</button>
                 </button>
@@ -67,8 +71,8 @@
                 <h1>Cart</h1>
                 <ul>
                     <li v-for="(item,index) in cart" :key="index">
-                        {{item.id}}
-                        {{item.title}}
+                        <img v-bind:src="item.image" alt="image" height="100" width="100"/>
+                        {{item.price}} -- {{item.title}}
                         <button v-on:click="removeFromCart(index)">Remove</button>
                         
                     </li>
@@ -139,6 +143,7 @@
             data: {
                 sitename:"After School Lessons",  
                 products: products,
+                searchTerm: '',
                 order: {
                     firstname: '',
                     lastname: '',
@@ -166,7 +171,8 @@
             },
             methods: {
                 addToCart: function(product) {
-                    this.cart.push(product.id);
+                    this.cart.push(product);
+                    
                 },
                 showCheckout(){
                     this.showproduct = !this.showproduct ? true : false;
@@ -187,6 +193,9 @@
                         }
                     }
                     return count;
+                },
+                removeFromCart(index){
+                    this.cart.splice(index, 1);
                 }
                 
 
@@ -195,7 +204,18 @@
                 cartItemCount() {
                     return this.cart.length;
                 },
-                
+                // Filter products based on searchTerm (title)
+                filteredProducts(){
+                    const term = this.searchTerm && this.searchTerm.toString().toLowerCase();
+                    if(!term) return this.products;
+                    return this.products.filter(p => {
+                        return (p.title && p.title.toString().toLowerCase().includes(term)) ||
+                               (p.description && p.description.toString().toLowerCase().includes(term)) ||
+                               (p.location && p.location.toString().toLowerCase().includes(term)) ||
+                               (p.price && p.price.toString().toLowerCase().includes(term)) ||
+                               (p.availableInventory && p.availableInventory.toString().toLowerCase().includes(term));
+                    });
+                },
                 itemsLeft(){
                     return product.availableInventory - this.cartItemCount;
                 },

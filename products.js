@@ -5,7 +5,7 @@ let products = [
                     "title": "KARATE",
                     "description": "Self defense class for all ages",
                     "price": 5000,
-                    "image": 'img/karate.jpg',
+                    "image": "img/karate.jpg",
                     "availableInventory": 5,
                     "location": "B15-1-09",
                     "rating": 4
@@ -16,7 +16,7 @@ let products = [
                     "title": "MUSIC",
                     "description": "Learn to play an instrument of your choice",
                     "price": 5000,
-                    "image": 'img/music.jpg',
+                    "image": "img/music.jpg",
                     "availableInventory": 5,
                     "location": "B15-1-10",
                     "rating": 5
@@ -27,7 +27,7 @@ let products = [
                     "title": "BASKETBALL",
                     "description": "Learn to play basketball like a pro",
                     "price": 5000,
-                    "image": 'img/basketball.png',
+                    "image": "img/basketball.png",
                     "availableInventory": 5,
                     "location": "B15-1-11",
                     "rating": 4
@@ -38,7 +38,7 @@ let products = [
                     "title": "ART AND CRAFT",
                     "description": "Express yourself with colors and creativity",
                     "price": 5000,
-                    "image": 'img/artandcraft.jpg',
+                    "image": "img/artandcraft.jpg",
                     "availableInventory": 5,
                     "location": "B15-1-12",
                     "rating": 5
@@ -49,7 +49,7 @@ let products = [
                     "title": "ROBOTICS",
                     "description": "Learn to build and program robots",
                     "price": 5000,
-                    "image": 'img/robotics.png',
+                    "image": "img/robotics.png",
                     "availableInventory": 5,
                     "location": "B15-1-13",
                     "rating": 3
@@ -60,7 +60,7 @@ let products = [
                     "title": "POETRY",
                     "description": "Unleash the power of words",
                     "price": 5000,
-                    "image": 'img/poetry.jpeg',
+                    "image": "img/poetry.jpeg",
                     "availableInventory": 5,
                     "location": "B15-1-14",
                     "rating": 4
@@ -71,7 +71,7 @@ let products = [
                     "title": "CHESS",
                     "description": "Learn the game of kings",
                     "price": 5000,
-                    "image": 'img/chess.png',
+                    "image": "img/chess.png",
                     "availableInventory": 5,
                     "location": "B15-1-15",
                     "rating": 5
@@ -82,7 +82,7 @@ let products = [
                     "title": "CULINARY",
                     "description": "Express your creativity with food",
                     "price": 5000,
-                    "image": 'img/CULINARY.jpeg',
+                    "image": "img/CULINARY.jpeg",
                     "availableInventory": 5,
                     "location": "B15-1-16",
                     "rating": 4
@@ -93,7 +93,7 @@ let products = [
                     "title": "FASHION",
                     "description": "Learn to design and sew your own clothes",
                     "price": 5000,
-                    "image": 'img/fashion.png',
+                    "image": "img/fashion.png",
                     "availableInventory": 5,
                     "location": "B15-1-17",
                     "rating": 5
@@ -104,7 +104,7 @@ let products = [
                     "title": "PHOTOGRAPHY",
                     "description": "Capture the world through your lens",
                     "price": 5000,
-                    "image": 'img/photography.png',
+                    "image": "img/photography.png",
                     "availableInventory": 5,
                     "location": "B15-1-18",
                     "rating": 4
@@ -116,7 +116,7 @@ let products = [
                     "title": "VOLLEYBALL",
                     "description": "Learn to play volleyball like a pro",
                     "price": 5000,
-                    "image": 'img/volleyball.jpeg',
+                    "image": "img/volleyball.jpeg",
                     "availableInventory": 5,
                     "location": "B15-1-19",
                     "rating": 3
@@ -127,7 +127,7 @@ let products = [
                     "title": "FOOTBALL",
                     "description": "Learn to play football like a pro",
                     "price": 5000,
-                    "image": 'img/football.jpeg',
+                    "image": "img/football.jpeg",
                     "availableInventory": 5,
                     "location": "B15-1-20",
                     "rating": 5
@@ -137,7 +137,7 @@ let products = [
                     "title": "GAMING",
                     "description": "Do what you love",
                     "price": 5000,
-                    "image": 'img/gaming.png',
+                    "image": "img/gaming.png",
                     "availableInventory": 5,
                     "location": "B15-1-21",
                     "rating": 3
@@ -148,7 +148,7 @@ let products = [
                     "title": "GARDENING",
                     "description": "Learn to grow your own food",
                     "price": 5000,
-                    "image": 'img/garden.jpg',
+                    "image": "img/garden.jpg",
                     "availableInventory": 5,
                     "location": "B15-1-22",
                     "rating": 5

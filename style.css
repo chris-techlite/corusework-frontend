@@ -10,9 +10,12 @@ html,body{
 }
 
 #app{
-    max-width:1100px;
+    max-width:900px;
     margin:2rem auto;
-    padding:1.25rem;
+    padding:1.5rem;
+    background:#fff;
+    border-radius:14px;
+    box-shadow:0 4px 24px rgba(30,41,59,0.07);
 }
 
 header{
@@ -199,6 +202,194 @@ label{
     font-weight:700;
 }
 
+/* Search bar */
+input[type="text"] {
+    width: 100%;
+    max-width: 340px;
+    padding: 0.6rem 1rem;
+    border: 1px solid #e0e7ef;
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    background: #f1f5f9;
+    color: #1f2937;
+    box-sizing: border-box;
+}
+input[type="text"]::placeholder {
+    color: #94a3b8;
+}
+
+/* Sorting controls */
+select {
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    border: 1px solid #e0e7ef;
+    font-size: 1rem;
+    margin-right: 0.7rem;
+    background: #f1f5f9;
+    color: #1f2937;
+}
+button {
+    background: #0ea5a4;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.6rem 1.1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin: 0.3rem 0.5rem 0.3rem 0;
+    box-shadow: 0 2px 8px rgba(14,165,164,0.08);
+    transition: background 0.18s;
+}
+button:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+button:hover:not(:disabled) {
+    background: #06b6d4;
+}
+
+/* Lesson box */
+.lesson-box {
+    background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+    border: 1px solid #e0e7ef;
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 2px 8px rgba(30,41,59,0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.lesson-box h3 {
+    margin: 0 0 0.2rem 0;
+    font-size: 1.15rem;
+    color: #0ea5a4;
+}
+.lesson-box p {
+    margin: 0.1rem 0;
+    color: #374151;
+    font-size: 1rem;
+}
+.lesson-box button {
+    align-self: flex-start;
+    margin-top: 0.5rem;
+}
+
+/* Cart and checkout */
+#app h2 {
+    margin-top: 2rem;
+    font-size: 1.2rem;
+    color: #0ea5a4;
+}
+#app > div > h3 {
+    color: #0ea5a4;
+}
+
+/* Cart items */
+#app > div > div {
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    margin-bottom: 0.7rem;
+    box-shadow: 0 1px 4px rgba(30,41,59,0.03);
+}
+
+/* Checkout inputs */
+input[type="text"] {
+    margin-bottom: 0.7rem;
+}
+
+
+
+/* Sorting controls */
+.sort-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
+    align-items: center;
+}
+
+.sort-controls select {
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    border: 1px solid rgba(30,41,59,0.1);
+    font-size: 1rem;
+    background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+    color: #1f2937;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sort-controls select:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(14,165,164,0.12);
+}
+
+.sort-controls button {
+    background: linear-gradient(180deg, #0ea5a4 0%, #06b6d4 100%);
+    border: 0;
+    color: white;
+    padding: 0.55rem 1rem;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(14,165,164,0.12);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.18s ease;
+}
+
+.sort-controls button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(14,165,164,0.15);
+    background: linear-gradient(180deg, #06b6d4 0%, #0ea5a4 100%);
+}
+
+.sort-controls button:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+input, select {
+    color: #000 !important;
+    background: #fff !important;
+    position: relative !important;
+    z-index: 5 !important;
+}
+label {
+    color: #000 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .sort-controls {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    #app {
+        padding: 0.7rem;
+        margin: 0.5rem;
+    }
+    .lesson-box {
+        padding: 0.7rem 0.5rem;
+    }
+    input[type="text"], select {
+        font-size: 0.95rem;
+        padding: 0.45rem 0.7rem;
+    }
+    button {
+        font-size: 0.95rem;
+        padding: 0.5rem 0.7rem;
+    }
+}
 
 @media (max-width:720px){
     header{

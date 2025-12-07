@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Coursework Fetch</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+</head>
+<body>
+
+<div id="app">
+    <h1>Fetch Test</h1>
+
+    
+    <input type="text" v-model="searchWord" placeholder="Search lessons..." @input="searchLessonsBackend" />
+
+    <div v-for="lesson in lessons">
+        <h3>{{ lesson.subject }}</h3>
+        <p>Location: {{ lesson.location }}</p>
+        <p>Price: {{ lesson.price }}</p>
+        <p>Spaces: {{ lesson.space }}</p>
+    </div>
+</div>
+
+<script>
+const API = "http://localhost:3000";
+
+new Vue({
+    el: "#app",
+    data: {
+        lessons: [],
+        searchWord: ""
+    },
+    methods: {
+
+        
+        loadLessons() {
+            fetch(API + "/lessons")
+                .then(response => response.json())
+                .then(data => {
+                    this.lessons = data;
+                })
+                .catch(err => console.error("Error loading lessons:", err));
+        },
+
+        searchLessonsBackend() {
+            fetch(API + "/search?keyword=" + encodeURIComponent(this.searchWord))
+                .then(response => response.json())
+                .then(data => {
+                    this.lessons = data;
+                })
+                .catch(err => console.error("Error searching lessons:", err));
+        },
+
+        submitOrder(order) {
+            return fetch(API + "/orders", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(order)
+            })
+            .then(response => response.json())
+            .catch(err => console.error("Error submitting order:", err));
+        },
+
+        
+        updateLessonSpace(id, newSpace) {
+            return fetch(API + "/lessons/" + id, {
+                method: "PUT",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({ space: newSpace })
+            })
+            .then(response => response.json())
+            .catch(err => console.error("Error updating lesson space:", err));
+        }
+
+    },
+    created() {
+        this.loadLessons();
+    }
+});
+</script>
+
+</body>
+</html>

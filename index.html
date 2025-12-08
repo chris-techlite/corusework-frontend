@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,20 +6,17 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Checkout vertical layout */
         .checkout-container-vertical {
             display: flex;
-            flex-direction: column; /* vertical layout */
-            gap: 30px; /* space between cart and customer sections */
+            flex-direction: column;
+            gap: 30px;
         }
-
         .cart-section, .customer-section {
             border: 1px solid #ccc;
             padding: 20px;
             border-radius: 5px;
             background-color: #f9f9f9;
         }
-
         .lesson-box {
             border: 1px solid #ddd;
             padding: 10px;
@@ -44,7 +40,6 @@
         </div>
     </header>
 
-    <!-- SORT CONTROLS -->
     <div v-if="showproduct && !showReceipt" class="sort-controls">
         <select v-model="sortKey">
             <option value="">Sort by...</option>
@@ -78,9 +73,8 @@
             </div>
         </div>
 
-        <!-- CART & CHECKOUT PAGE (VERTICAL) -->
+        <!-- CART & CHECKOUT PAGE -->
         <div v-else-if="!showReceipt" class="checkout-container-vertical">
-            <!-- CART SECTION -->
             <div class="cart-section">
                 <h2>Shopping Cart</h2>
                 <div v-for="(item, index) in cart" :key="index" class="lesson-box">
@@ -91,7 +85,6 @@
                 </div>
             </div>
 
-            <!-- CUSTOMER DETAILS SECTION -->
             <div class="customer-section">
                 <h2>Checkout</h2>
                 <p>
@@ -103,23 +96,16 @@
                     <input type="text" v-model.trim="order.lastname"/>
                 </p>
                 <p>
+                    <label>Phone:</label>
+                    <input type="text" v-model.trim="order.phone"/>
+                </p>
+                <p>
                     <label>Address:</label>
                     <input type="text" v-model="order.address"/>
                 </p>
                 <p>
                     <label>City:</label>
                     <input type="text" v-model="order.city"/>
-                </p>
-                <p>
-                    <label>State:</label>
-                    <select v-model="order.state">
-                        <option disabled value="">Select state</option>
-                        <option v-for="(state, key) in states" :value="state">{{ key }}</option>
-                    </select>
-                </p>
-                <p>
-                    <label>Zip Code:</label>
-                    <input type="number" v-model.number="order.zip"/>
                 </p>
                 <p>
                     <input type="checkbox" id="gift" v-model="order.gift" :true-value="order.sendGift" :false-value="order.dontsendGifts"/>
@@ -140,7 +126,8 @@
         <div v-else>
             <h2>Receipt</h2>
             <p><strong>Name:</strong> {{ receipt.customer.firstname }} {{ receipt.customer.lastname }}</p>
-            <p><strong>Address:</strong> {{ receipt.customer.address }}, {{ receipt.customer.city }}, {{ receipt.customer.state }}, {{ receipt.customer.zip }}</p>
+            <p><strong>Phone:</strong> {{ receipt.customer.phone }}</p>
+            <p><strong>Address:</strong> {{ receipt.customer.address }}, {{ receipt.customer.city }}</p>
             <p><strong>Shipping Method:</strong> {{ receipt.customer.method }}</p>
             <p><strong>Gift:</strong> {{ receipt.customer.gift }}</p>
             <p><strong>Date:</strong> {{ receipt.date }}</p>
@@ -172,10 +159,9 @@ new Vue({
         order: {
             firstname: '',
             lastname: '',
+            phone: '',
             address: '',
             city: '',
-            zip: '',
-            state: '',
             method: 'home',
             gift: 'do not send as Gifts',
             sendGift: 'Send as gift',
@@ -217,10 +203,7 @@ new Vue({
 
         searchLessons() {
             const term = this.searchTerm.trim().toLowerCase();
-            if (!term) {
-                this.loadLessons();
-                return;
-            }
+            if (!term) { this.loadLessons(); return; }
             fetch(API + "/search?keyword=" + encodeURIComponent(term))
                 .then(r => r.json())
                 .then(data => this.products = data)
@@ -237,10 +220,9 @@ new Vue({
                 customer: {
                     firstname: this.order.firstname,
                     lastname: this.order.lastname,
+                    phone: this.order.phone,
                     address: this.order.address,
                     city: this.order.city,
-                    state: this.order.state,
-                    zip: this.order.zip,
                     method: this.order.method,
                     gift: this.order.gift
                 },
@@ -261,17 +243,16 @@ new Vue({
             .then(res => res.json())
             .then(data => {
                 this.receipt = orderPayload;
-
-            this.cart.forEach(item => {
-            fetch(API + "/lessons/" + item.id, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ availableInventory: item.availableInventory - 1 })
-    })
-    .then(r => r.json())
-    .then(d => console.log("Lesson updated:", d))
-    .catch(err => console.error("Error updating lesson:", err));
-});
+                this.cart.forEach(item => {
+                    fetch(API + "/lessons/" + item.id, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ availableInventory: item.availableInventory - 1 })
+                    })
+                    .then(r => r.json())
+                    .then(d => console.log("Lesson updated:", d))
+                    .catch(err => console.error("Error updating lesson:", err));
+                });
                 this.showReceipt = true;
                 this.cart = [];
                 this.showproduct = false;
@@ -284,13 +265,11 @@ new Vue({
             this.showproduct = true;
             this.order.firstname = '';
             this.order.lastname = '';
+            this.order.phone = '';
             this.order.address = '';
             this.order.city = '';
-            this.order.zip = '';
-            this.order.state = '';
             this.order.method = 'home';
             this.order.gift = 'do not send as Gifts';
-
             this.loadLessons();
         },
 
@@ -306,23 +285,20 @@ new Vue({
             const nameRegex = /^[A-Za-z]+$/;
             const phoneRegex = /^[0-9]+$/;
             return this.order.firstname && this.order.lastname && this.order.address &&
-                this.order.city && this.order.zip && this.order.state &&
+                this.order.city && this.order.phone &&
                 nameRegex.test(this.order.firstname) && nameRegex.test(this.order.lastname) &&
-                /^[0-9]+$/.test(String(this.order.zip));
+                phoneRegex.test(this.order.phone);
         },
 
         sortedProducts() {
             if (!this.sortKey) return this.products;
-
-            return this.products.slice().sort((a, b) => {
+            return this.products.slice().sort((a,b)=>{
                 let valA = a[this.sortKey];
                 let valB = b[this.sortKey];
-
-                if (typeof valA === "string") valA = valA.toLowerCase();
-                if (typeof valB === "string") valB = valB.toLowerCase();
-
-                if (valA < valB) return this.sortOrder === 'asc' ? -1 : 1;
-                if (valA > valB) return this.sortOrder === 'asc' ? 1 : -1;
+                if(typeof valA==="string") valA = valA.toLowerCase();
+                if(typeof valB==="string") valB = valB.toLowerCase();
+                if(valA<valB) return this.sortOrder==='asc'?-1:1;
+                if(valA>valB) return this.sortOrder==='asc'?1:-1;
                 return 0;
             });
         }

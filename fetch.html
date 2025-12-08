@@ -9,41 +9,26 @@
 <div id="app">
     <h1>Fetch Test</h1>
 
-    <!-- Search bar -->
-    <input 
-        type="text" 
-        v-model="searchWord" 
-        placeholder="Search lessons..." 
-        @input="applySearch"
-    />
+    <input type="text" v-model="searchWord" placeholder="Search lessons..." @input="applySearch" />
 
     <div v-for="lesson in lessons" :key="lesson.id" style="border:1px solid #ccc; margin:5px; padding:5px;">
-        <h3>{{ lesson.subject }}</h3>
+        <h3>{{ lesson.title || lesson.subject }}</h3>
         <p>Location: {{ lesson.location }}</p>
         <p>Price: {{ lesson.price }}</p>
-        <p>Spaces: {{ lesson.space }}</p>
-        <button @click="addToCart(lesson)" :disabled="lesson.space <= 0">Add to Cart</button>
+        <p>Spaces: {{ lesson.space || lesson.availableInventory }}</p>
+        <button @click="addToCart(lesson)" :disabled="(lesson.space || lesson.availableInventory) <= 0">Add to Cart</button>
     </div>
 
     <h2>Cart</h2>
-    <div v-for="(item, index) in cart" :key="index" style="border:1px solid #999; margin:5px; padding:5px;">
-        <p>{{ item.subject }} - {{ item.price }}</p>
-        <button @click="removeFromCart(index)">Remove</button>
+    <div v-for="(item, index) in cartAggregated" :key="item.id" style="border:1px solid #999; margin:5px; padding:5px;">
+        <p>{{ item.title }} - {{ item.price }} - qty: {{ item.quantity }}</p>
+        <button @click="removeOneFromCart(item.id)">Remove one</button>
     </div>
 
     <h2>Customer Details</h2>
-    <p>
-        <label>First Name:</label>
-        <input type="text" v-model="customer.firstname">
-    </p>
-    <p>
-        <label>Last Name:</label>
-        <input type="text" v-model="customer.lastname">
-    </p>
-    <p>
-        <label>Email:</label>
-        <input type="text" v-model="customer.email">
-    </p>
+    <p><label>First Name:</label><input type="text" v-model="customer.firstname"></p>
+    <p><label>Last Name:</label><input type="text" v-model="customer.lastname"></p>
+    <p><label>Email:</label><input type="text" v-model="customer.email"></p>
     <button @click="placeOrder" :disabled="!cart.length || !customer.firstname || !customer.lastname || !customer.email">Place Order</button>
 </div>
 
@@ -56,87 +41,76 @@ new Vue({
         lessons: [],
         searchWord: "",
         cart: [],
-        customer: {
-            firstname: '',
-            lastname: '',
-            email: ''
-        }
+        customer: { firstname: '', lastname: '', email: '' }
     },
     methods: {
         loadLessons() {
             fetch(API + "/lessons")
-                .then(response => response.json())
-                .then(data => {
-                    this.lessons = data;
-                })
-                .catch(err => console.error("Error loading lessons:", err));
-        },
-
-        /* -----------------------------  
-           Your applySearch() added here  
-        ------------------------------ */
-        applySearch() {
-            if (!this.searchWord) {
-                this.loadLessons();
-                return;
-            }
-
-            fetch(`${API}/search/${encodeURIComponent(this.searchWord)}`)
-                .then(res => res.json())
+                .then(r => r.json())
                 .then(data => this.lessons = data)
-                .catch(err => console.log(err));
+                .catch(e => console.error(e));
         },
-
+        applySearch() {
+            if (!this.searchWord) { this.loadLessons(); return; }
+            fetch(API + "/search?keyword=" + encodeURIComponent(this.searchWord))
+                .then(r => r.json()).then(d => this.lessons = d).catch(e => console.error(e));
+        },
         addToCart(lesson) {
-            this.cart.push(lesson);
+            this.cart.push({ id: lesson.id, title: lesson.title || lesson.subject, price: Number(lesson.price||0), location: lesson.location });
         },
-
-        removeFromCart(index) {
-            this.cart.splice(index, 1);
+        removeOneFromCart(id) {
+            const idx = this.cart.findIndex(i => i.id === id);
+            if (idx !== -1) this.cart.splice(idx,1);
         },
-
+        cartAggregated() {
+            const map = {};
+            for (const it of this.cart) {
+                if (!map[it.id]) map[it.id] = { id: it.id, title: it.title, price: it.price, location: it.location, quantity: 0 };
+                map[it.id].quantity++;
+            }
+            return Object.values(map);
+        },
         async placeOrder() {
+            const counts = {};
+            for (const it of this.cart) counts[it.id] = (counts[it.id]||0) + 1;
+            const items = Object.keys(counts).map(id => {
+                const sample = this.cart.find(c => c.id == id);
+                return { id: Number(id), title: sample.title, price: sample.price, location: sample.location, quantity: counts[id] };
+            });
             const order = {
                 customer: { ...this.customer },
-                items: this.cart.map(item => ({
-                    subject: item.subject,
-                    price: item.price,
-                    location: item.location
-                })),
-                total: this.cart.reduce((sum, item) => sum + Number(item.price), 0),
+                items,
+                total: items.reduce((s,i) => s + i.price * i.quantity, 0),
                 date: new Date().toLocaleString()
             };
-
             try {
-                const response = await fetch(API + "/orders", {
+                const res = await fetch(API + "/orders", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {'Content-Type':'application/json'},
                     body: JSON.stringify(order)
                 });
-                const data = await response.json();
+                const data = await res.json();
                 console.log("Order saved:", data);
-
-                const receiptWindow = window.open("", "_blank");
-                receiptWindow.document.write(`<h1>Receipt</h1>`);
-                receiptWindow.document.write(`<p><strong>Name:</strong> ${order.customer.firstname} ${order.customer.lastname}</p>`);
-                receiptWindow.document.write(`<p><strong>Email:</strong> ${order.customer.email}</p>`);
-                receiptWindow.document.write(`<p><strong>Date:</strong> ${order.date}</p>`);
-                receiptWindow.document.write("<h2>Ordered Items:</h2><ul>");
-                order.items.forEach(i => {
-                    receiptWindow.document.write(`<li>${i.subject} - ${i.price} - ${i.location}</li>`);
-                });
-                receiptWindow.document.write(`</ul>`);
-                receiptWindow.document.write(`<p><strong>Total:</strong> ${order.total}</p>`);
-
-                // Reset cart + customer
+                const w = window.open("","_blank");
+                w.document.write("<h1>Receipt</h1>");
+                w.document.write(`<p>${order.customer.firstname} ${order.customer.lastname}</p>`);
+                w.document.write("<ul>");
+                order.items.forEach(i => w.document.write(`<li>${i.title} x${i.quantity} - ${i.price}</li>`));
+                w.document.write("</ul>");
+                w.document.write(`<p>Total: ${order.total}</p>`);
                 this.cart = [];
-                this.customer.firstname = '';
-                this.customer.lastname = '';
-                this.customer.email = '';
-
-            } catch (err) {
-                console.error("Error placing order:", err);
+                this.customer = { firstname:'', lastname:'', email:'' };
+            } catch (err) { console.error(err); }
+        }
+    },
+    computed: {
+        cartAggregated() {
+            const map = {};
+            for (const it of this.cart) {
+                if (!map[it.id]) map[it.id] = { id: it.id, title: it.title, price: it.price, location: it.location, quantity: 0 };
+                map[it.id].quantity++;
             }
+            return Object.values(map);
         }
     },
     created() {
@@ -144,6 +118,5 @@ new Vue({
     }
 });
 </script>
-
 </body>
 </html>

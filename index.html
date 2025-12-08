@@ -6,17 +6,20 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
+        /* Checkout vertical layout */
         .checkout-container-vertical {
             display: flex;
             flex-direction: column;
             gap: 30px;
         }
+
         .cart-section, .customer-section {
             border: 1px solid #ccc;
             padding: 20px;
             border-radius: 5px;
             background-color: #f9f9f9;
         }
+
         .lesson-box {
             border: 1px solid #ddd;
             padding: 10px;
@@ -96,7 +99,7 @@
                     <input type="text" v-model.trim="order.lastname"/>
                 </p>
                 <p>
-                    <label>Phone:</label>
+                    <label>Phone Number:</label>
                     <input type="text" v-model.trim="order.phone"/>
                 </p>
                 <p>
@@ -108,14 +111,12 @@
                     <input type="text" v-model="order.city"/>
                 </p>
                 <p>
-                    <input type="checkbox" id="gift" v-model="order.gift" :true-value="order.sendGift" :false-value="order.dontsendGifts"/>
-                    <label for="gift">Ship as gift?</label>
-                </p>
-                <p>
                     <input type="radio" id="home" value="home" v-model="order.method"/>
                     <label for="home">Home</label>
                     <input type="radio" id="business" value="business" v-model="order.method"/>
                     <label for="business">Business</label>
+                    <input type="radio" id="other" value="other" v-model="order.method"/>
+                    <label for="other">Other</label>
                 </p>
 
                 <button v-on:click="submitForm" :disabled="!validOrder">Place Order</button>
@@ -129,7 +130,6 @@
             <p><strong>Phone:</strong> {{ receipt.customer.phone }}</p>
             <p><strong>Address:</strong> {{ receipt.customer.address }}, {{ receipt.customer.city }}</p>
             <p><strong>Shipping Method:</strong> {{ receipt.customer.method }}</p>
-            <p><strong>Gift:</strong> {{ receipt.customer.gift }}</p>
             <p><strong>Date:</strong> {{ receipt.date }}</p>
             <h3>Items Ordered:</h3>
             <ul>
@@ -163,11 +163,7 @@ new Vue({
             address: '',
             city: '',
             method: 'home',
-            gift: 'do not send as Gifts',
-            sendGift: 'Send as gift',
-            dontsendGifts: 'Do not send as gift',
         },
-        states: {AL: 'Alabama', AR: 'Arizona', CA: 'California', NV: 'Nevada'},
         sortKey: '',
         sortOrder: 'asc'
     },
@@ -179,28 +175,22 @@ new Vue({
                 .then(data => this.products = data)
                 .catch(err => console.error(err));
         },
-
         addToCart(product) {
             this.cart.push(product);
         },
-
         removeFromCart(index) {
             this.cart.splice(index, 1);
             if (this.cart.length === 0) this.showproduct = true;
         },
-
         cartCount(product) {
             return this.cart.filter(item => item === product).length;
         },
-
         canAddToCart(product) {
             return product.availableInventory > this.cartCount(product);
         },
-
         showCheckout() {
             this.showproduct = !this.showproduct;
         },
-
         searchLessons() {
             const term = this.searchTerm.trim().toLowerCase();
             if (!term) { this.loadLessons(); return; }
@@ -209,23 +199,13 @@ new Vue({
                 .then(data => this.products = data)
                 .catch(err => console.error(err));
         },
-
         clearSearch() {
             this.searchTerm = '';
             this.loadLessons();
         },
-
         submitForm() {
             const orderPayload = {
-                customer: {
-                    firstname: this.order.firstname,
-                    lastname: this.order.lastname,
-                    phone: this.order.phone,
-                    address: this.order.address,
-                    city: this.order.city,
-                    method: this.order.method,
-                    gift: this.order.gift
-                },
+                customer: { ...this.order },
                 items: this.cart.map(item => ({
                     title: item.title,
                     price: item.price,
@@ -234,7 +214,6 @@ new Vue({
                 total: this.cart.reduce((sum, item) => sum + item.price, 0),
                 date: new Date().toLocaleString()
             };
-
             fetch(API + '/orders', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -243,36 +222,25 @@ new Vue({
             .then(res => res.json())
             .then(data => {
                 this.receipt = orderPayload;
-                this.cart.forEach(item => {
-                    fetch(API + "/lessons/" + item.id, {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ availableInventory: item.availableInventory - 1 })
-                    })
-                    .then(r => r.json())
-                    .then(d => console.log("Lesson updated:", d))
-                    .catch(err => console.error("Error updating lesson:", err));
-                });
                 this.showReceipt = true;
                 this.cart = [];
                 this.showproduct = false;
             })
             .catch(err => console.error(err));
         },
-
         backToShop() {
             this.showReceipt = false;
             this.showproduct = true;
-            this.order.firstname = '';
-            this.order.lastname = '';
-            this.order.phone = '';
-            this.order.address = '';
-            this.order.city = '';
-            this.order.method = 'home';
-            this.order.gift = 'do not send as Gifts';
+            this.order = {
+                firstname: '',
+                lastname: '',
+                phone: '',
+                address: '',
+                city: '',
+                method: 'home'
+            };
             this.loadLessons();
         },
-
         toggleSortOrder() {
             this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
         }
@@ -280,16 +248,14 @@ new Vue({
 
     computed: {
         cartItemCount() { return this.cart.length; },
-
         validOrder() {
             const nameRegex = /^[A-Za-z]+$/;
             const phoneRegex = /^[0-9]+$/;
-            return this.order.firstname && this.order.lastname && this.order.address &&
-                this.order.city && this.order.phone &&
-                nameRegex.test(this.order.firstname) && nameRegex.test(this.order.lastname) &&
-                phoneRegex.test(this.order.phone);
+            return this.order.firstname && this.order.lastname && this.order.phone &&
+                   this.order.address && this.order.city && this.order.method &&
+                   nameRegex.test(this.order.firstname) && nameRegex.test(this.order.lastname) &&
+                   phoneRegex.test(this.order.phone);
         },
-
         sortedProducts() {
             if (!this.sortKey) return this.products;
             return this.products.slice().sort((a,b)=>{
@@ -297,16 +263,14 @@ new Vue({
                 let valB = b[this.sortKey];
                 if(typeof valA==="string") valA = valA.toLowerCase();
                 if(typeof valB==="string") valB = valB.toLowerCase();
-                if(valA<valB) return this.sortOrder==='asc'?-1:1;
-                if(valA>valB) return this.sortOrder==='asc'?1:-1;
+                if(valA < valB) return this.sortOrder==='asc'?-1:1;
+                if(valA > valB) return this.sortOrder==='asc'?1:-1;
                 return 0;
             });
         }
     },
 
-    created() {
-        this.loadLessons();
-    }
+    created() { this.loadLessons(); }
 });
 </script>
 </body>

@@ -6,20 +6,17 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Checkout vertical layout */
         .checkout-container-vertical {
             display: flex;
-            flex-direction: column; /* vertical layout */
-            gap: 30px; /* space between cart and customer sections */
+            flex-direction: column;
+            gap: 30px;
         }
-
         .cart-section, .customer-section {
             border: 1px solid #ccc;
             padding: 20px;
             border-radius: 5px;
             background-color: #f9f9f9;
         }
-
         .lesson-box {
             border: 1px solid #ddd;
             padding: 10px;
@@ -33,13 +30,11 @@
 <div id="app">
     <header v-if="!showReceipt">
         <h1>{{ sitename }}</h1>
-        <button v-on:click="showCheckout" v-if="cartItemCount > 0">
-            {{cartItemCount}} <i class="fa-solid fa-cart-shopping"></i> Check out
-        </button>
-        <button disabled v-else><i class="fa-solid fa-cart-shopping"></i> Check out</button>
+        <button v-if="cartItemCount > 0" @click="showCheckout">{{ cartItemCount }} <i class="fa-solid fa-cart-shopping"></i> Check out</button>
+        <button v-else disabled><i class="fa-solid fa-cart-shopping"></i> Check out</button>
         <div class="search-wrap">
-            <input type="text" v-model.trim="searchTerm" placeholder="Search lessons, location, or description..." @input="searchLessons"/>
-            <button v-if="searchTerm" v-on:click="clearSearch">✕</button>
+            <input type="text" v-model.trim="searchTerm" placeholder="Search lessons, location, or description..." @input="applySearch"/>
+            <button v-if="searchTerm" @click="clearSearch">✕</button>
         </div>
     </header>
 
@@ -50,11 +45,9 @@
             <option value="title">Title</option>
             <option value="location">Location</option>
             <option value="price">Price</option>
-            <option value="availableInventory">Spaces</option>
+            <option value="space">Spaces</option>
         </select>
-        <button v-on:click="toggleSortOrder">
-            {{ sortOrder === 'asc' ? 'Ascending' : 'Descending' }}
-        </button>
+        <button @click="toggleSortOrder">{{ sortOrder === 'asc' ? 'Ascending' : 'Descending' }}</button>
     </div>
 
     <main>
@@ -67,9 +60,9 @@
                 <h3>{{ Product.title }}</h3>
                 <p>{{ Product.description }}</p>
                 <p><strong>Price:</strong> {{ Product.price }}</p>
-                <p><strong>Spaces:</strong> {{ Product.availableInventory - cartCount(Product) }}</p>
+                <p><strong>Spaces:</strong> {{ Product.space - cartCount(Product) }}</p>
                 <p><strong>Location:</strong> {{ Product.location }}</p>
-                <button v-on:click="addToCart(Product)" :disabled="!canAddToCart(Product)">Add to cart</button>
+                <button @click="addToCart(Product)" :disabled="!canAddToCart(Product)">Add to cart</button>
                 <div>
                     <span v-for="n in Product.rating">★</span>
                     <span v-for="n in 5 - Product.rating">☆</span>
@@ -77,61 +70,40 @@
             </div>
         </div>
 
-        <!-- CART & CHECKOUT PAGE (VERTICAL) -->
+        <!-- CHECKOUT PAGE -->
         <div v-else-if="!showReceipt" class="checkout-container-vertical">
-            <!-- CART SECTION -->
             <div class="cart-section">
                 <h2>Shopping Cart</h2>
-                <div v-for="(item, index) in cart" :key="index" class="lesson-box">
+                <div v-for="(item, index) in cartAggregated" :key="item.id" class="lesson-box">
                     <h3>{{ item.title }}</h3>
                     <p><strong>Price:</strong> {{ item.price }}</p>
                     <p><strong>Location:</strong> {{ item.location }}</p>
-                    <button v-on:click="removeFromCart(index)">Remove</button>
+                    <p><strong>Quantity:</strong> {{ item.quantity }}</p>
+                    <button @click="removeOneFromCart(item.id)">Remove one</button>
                 </div>
             </div>
 
-            <!-- CUSTOMER DETAILS SECTION -->
             <div class="customer-section">
                 <h2>Checkout</h2>
-                <p>
-                    <label>First Name:</label>
-                    <input type="text" v-model.trim="order.firstname"/>
-                </p>
-                <p>
-                    <label>Last Name:</label>
-                    <input type="text" v-model.trim="order.lastname"/>
-                </p>
-                <p>
-                    <label>Address:</label>
-                    <input type="text" v-model="order.address"/>
-                </p>
-                <p>
-                    <label>City:</label>
-                    <input type="text" v-model="order.city"/>
-                </p>
-                <p>
-                    <label>State:</label>
+                <p><label>First Name:</label><input type="text" v-model.trim="order.firstname"/></p>
+                <p><label>Last Name:</label><input type="text" v-model.trim="order.lastname"/></p>
+                <p><label>Address:</label><input type="text" v-model="order.address"/></p>
+                <p><label>City:</label><input type="text" v-model="order.city"/></p>
+                <p><label>State:</label>
                     <select v-model="order.state">
                         <option disabled value="">Select state</option>
                         <option v-for="(state, key) in states" :value="state">{{ key }}</option>
                     </select>
                 </p>
-                <p>
-                    <label>Zip Code:</label>
-                    <input type="number" v-model.number="order.zip"/>
-                </p>
-                <p>
-                    <input type="checkbox" id="gift" v-model="order.gift" :true-value="order.sendGift" :false-value="order.dontsendGifts"/>
-                    <label for="gift">Ship as gift?</label>
-                </p>
+                <p><label>Zip Code:</label><input type="number" v-model.number="order.zip"/></p>
+                <p><input type="checkbox" id="gift" v-model="order.gift" :true-value="order.sendGift" :false-value="order.dontsendGifts"/><label for="gift">Ship as gift?</label></p>
                 <p>
                     <input type="radio" id="home" value="home" v-model="order.method"/>
                     <label for="home">Home</label>
                     <input type="radio" id="business" value="business" v-model="order.method"/>
                     <label for="business">Business</label>
                 </p>
-
-                <button v-on:click="submitForm" :disabled="!validOrder">Place Order</button>
+                <button @click="submitForm" :disabled="!validOrder">Place Order</button>
             </div>
         </div>
 
@@ -145,12 +117,10 @@
             <p><strong>Date:</strong> {{ receipt.date }}</p>
             <h3>Items Ordered:</h3>
             <ul>
-                <li v-for="item in receipt.items" :key="item.title">
-                    {{ item.title }} | ${{ item.price }} | {{ item.location }}
-                </li>
+                <li v-for="item in receipt.items" :key="item.id">{{ item.title }} | ${{ item.price }} | {{ item.location }} | Qty: {{ item.quantity }}</li>
             </ul>
             <p><strong>Total:</strong> ${{ receipt.total }}</p>
-            <button v-on:click="backToShop">Back to Shop</button>
+            <button @click="backToShop">Back to Shop</button>
         </div>
     </main>
 </div>
@@ -159,177 +129,86 @@
 const API = "https://coursework-backend-47ve.onrender.com";
 
 new Vue({
-    el: '#app',
-    data: {
-        sitename: "After School Lessons",
-        products: [],
-        searchTerm: '',
-        showproduct: true,
-        showReceipt: false,
-        cart: [],
-        receipt: {},
-        order: {
-            firstname: '',
-            lastname: '',
-            address: '',
-            city: '',
-            zip: '',
-            state: '',
-            method: 'home',
-            gift: 'do not send as Gifts',
-            sendGift: 'Send as gift',
-            dontsendGifts: 'Do not send as gift',
+    el:'#app',
+    data:{
+        sitename:"After School Lessons",
+        products:[],
+        searchTerm:'',
+        showproduct:true,
+        showReceipt:false,
+        cart:[],
+        receipt:{},
+        order:{
+            firstname:'',
+            lastname:'',
+            address:'',
+            city:'',
+            zip:'',
+            state:'',
+            method:'home',
+            gift:'do not send as Gifts',
+            sendGift:'Send as gift',
+            dontsendGifts:'Do not send as gift'
         },
-        states: {AL: 'Alabama', AR: 'Arizona', CA: 'California', NV: 'Nevada'},
-        sortKey: '',
-        sortOrder: 'asc'
+        states:{AL:'Alabama',AR:'Arizona',CA:'California',NV:'Nevada'},
+        sortKey:'',
+        sortOrder:'asc'
     },
-
-    methods: {
-        loadLessons() {
-            fetch(API + "/lessons")
-                .then(r => r.json())
-                .then(data => this.products = data)
-                .catch(err => console.error(err));
+    methods:{
+        loadLessons(){
+            fetch(API + "/lessons").then(r=>r.json()).then(d=>this.products=d).catch(e=>console.error(e));
         },
-
-        addToCart(product) {
-            this.cart.push(product);
+        applySearch(){
+            const term = this.searchTerm.trim();
+            if(!term){this.loadLessons();return;}
+            fetch(API + "/search?keyword=" + encodeURIComponent(term)).then(r=>r.json()).then(d=>this.products=d).catch(e=>console.error(e));
         },
-
-        removeFromCart(index) {
-            this.cart.splice(index, 1);
-            if (this.cart.length === 0) this.showproduct = true;
+        clearSearch(){ this.searchTerm=''; this.loadLessons(); },
+        addToCart(product){ this.cart.push({ id: product.id, title: product.title, price: Number(product.price), location: product.location }); },
+        removeOneFromCart(id){ const idx = this.cart.findIndex(c=>c.id===id); if(idx!==-1)this.cart.splice(idx,1); },
+        cartCount(product){ return this.cart.filter(i=>i.id===product.id).length; },
+        canAddToCart(product){ return product.space > this.cartCount(product); },
+        cartAggregated(){ const map={}; this.cart.forEach(it=>{ if(!map[it.id]) map[it.id]={...it,quantity:0}; map[it.id].quantity++; }); return Object.values(map); },
+        showCheckout(){ this.showproduct=!this.showproduct; },
+        submitForm(){
+            const counts={};
+            for(const it of this.cart) counts[it.id]=(counts[it.id]||0)+1;
+            const items=Object.keys(counts).map(id=>{ const sample=this.cart.find(c=>c.id==id); return { id:Number(id), title:sample.title, price:sample.price, location:sample.location, quantity:counts[id] }; });
+            const orderPayload={ customer:{...this.order}, items, total:items.reduce((s,i)=>s+i.price*i.quantity,0), date:new Date().toLocaleString() };
+            fetch(API+'/orders',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(orderPayload) }).then(r=>r.json()).then(d=>{
+                this.receipt=orderPayload;
+                this.cart=[];
+                this.showReceipt=true;
+                this.showproduct=false;
+            }).catch(e=>console.error(e));
         },
-
-        cartCount(product) {
-            return this.cart.filter(item => item === product).length;
-        },
-
-        canAddToCart(product) {
-            return product.availableInventory > this.cartCount(product);
-        },
-
-        showCheckout() {
-            this.showproduct = !this.showproduct;
-        },
-
-        searchLessons() {
-            const term = this.searchTerm.trim().toLowerCase();
-            if (!term) {
-                this.loadLessons();
-                return;
-            }
-            fetch(API + "/search?keyword=" + encodeURIComponent(term))
-                .then(r => r.json())
-                .then(data => this.products = data)
-                .catch(err => console.error(err));
-        },
-
-        clearSearch() {
-            this.searchTerm = '';
+        backToShop(){
+            this.showReceipt=false;
+            this.showproduct=true;
+            this.order={ firstname:'', lastname:'', address:'', city:'', zip:'', state:'', method:'home', gift:'do not send as Gifts', sendGift:'Send as gift', dontsendGifts:'Do not send as gift' };
             this.loadLessons();
         },
-
-        submitForm() {
-            const orderPayload = {
-                customer: {
-                    firstname: this.order.firstname,
-                    lastname: this.order.lastname,
-                    address: this.order.address,
-                    city: this.order.city,
-                    state: this.order.state,
-                    zip: this.order.zip,
-                    method: this.order.method,
-                    gift: this.order.gift
-                },
-                items: this.cart.map(item => ({
-                    title: item.title,
-                    price: item.price,
-                    location: item.location
-                })),
-                total: this.cart.reduce((sum, item) => sum + item.price, 0),
-                date: new Date().toLocaleString()
-            };
-
-            fetch(API + '/orders', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(orderPayload)
-            })
-            .then(res => res.json())
-            .then(data => {
-                this.receipt = orderPayload;
-
-            this.cart.forEach(item => {
-            fetch(API + "/lessons/" + item.id, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ availableInventory: item.availableInventory - 1 })
-    })
-    .then(r => r.json())
-    .then(d => console.log("Lesson updated:", d))
-    .catch(err => console.error("Error updating lesson:", err));
-});
-                this.showReceipt = true;
-                this.cart = [];
-                this.showproduct = false;
-            })
-            .catch(err => console.error(err));
-        },
-
-        backToShop() {
-            this.showReceipt = false;
-            this.showproduct = true;
-            this.order.firstname = '';
-            this.order.lastname = '';
-            this.order.address = '';
-            this.order.city = '';
-            this.order.zip = '';
-            this.order.state = '';
-            this.order.method = 'home';
-            this.order.gift = 'do not send as Gifts';
-
-            this.loadLessons();
-        },
-
-        toggleSortOrder() {
-            this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
-        }
+        toggleSortOrder(){ this.sortOrder=this.sortOrder==='asc'?'desc':'asc'; }
     },
-
-    computed: {
-        cartItemCount() { return this.cart.length; },
-
-        validOrder() {
-            const nameRegex = /^[A-Za-z]+$/;
-            const phoneRegex = /^[0-9]+$/;
-            return this.order.firstname && this.order.lastname && this.order.address &&
-                this.order.city && this.order.zip && this.order.state &&
-                nameRegex.test(this.order.firstname) && nameRegex.test(this.order.lastname) &&
-                /^[0-9]+$/.test(String(this.order.zip));
+    computed:{
+        cartItemCount(){ return this.cart.length; },
+        validOrder(){
+            const nameRegex=/^[A-Za-z]+$/;
+            return this.order.firstname && this.order.lastname && this.order.address && this.order.city && this.order.zip && this.order.state && nameRegex.test(this.order.firstname) && nameRegex.test(this.order.lastname) && /^[0-9]+$/.test(String(this.order.zip));
         },
-
-        sortedProducts() {
-            if (!this.sortKey) return this.products;
-
-            return this.products.slice().sort((a, b) => {
-                let valA = a[this.sortKey];
-                let valB = b[this.sortKey];
-
-                if (typeof valA === "string") valA = valA.toLowerCase();
-                if (typeof valB === "string") valB = valB.toLowerCase();
-
-                if (valA < valB) return this.sortOrder === 'asc' ? -1 : 1;
-                if (valA > valB) return this.sortOrder === 'asc' ? 1 : -1;
+        sortedProducts(){
+            if(!this.sortKey)return this.products;
+            return this.products.slice().sort((a,b)=>{
+                let valA=a[this.sortKey], valB=b[this.sortKey];
+                if(typeof valA==="string") valA=valA.toLowerCase();
+                if(typeof valB==="string") valB=valB.toLowerCase();
+                if(valA<valB) return this.sortOrder==='asc'?-1:1;
+                if(valA>valB) return this.sortOrder==='asc'?1:-1;
                 return 0;
             });
         }
     },
-
-    created() {
-        this.loadLessons();
-    }
+    created(){ this.loadLessons(); }
 });
 </script>
 </body>

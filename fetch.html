@@ -5,30 +5,29 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
 </head>
 <body>
-
 <div id="app">
     <h1>Fetch Test</h1>
 
     <input type="text" v-model="searchWord" placeholder="Search lessons..." @input="applySearch" />
 
-    <div v-for="lesson in lessons" :key="lesson.id" style="border:1px solid #ccc; margin:5px; padding:5px;">
-        <h3>{{ lesson.title || lesson.subject }}</h3>
+    <div v-for="lesson in lessons" :key="lesson._id" style="border:1px solid #ccc; margin:5px; padding:5px;">
+        <h3>{{ lesson.title }}</h3>
         <p>Location: {{ lesson.location }}</p>
         <p>Price: {{ lesson.price }}</p>
-        <p>Spaces: {{ lesson.space || lesson.availableInventory }}</p>
-        <button @click="addToCart(lesson)" :disabled="(lesson.space || lesson.availableInventory) <= 0">Add to Cart</button>
+        <p>Spaces: {{ lesson.availableInventory }}</p>
+        <button @click="addToCart(lesson)" :disabled="lesson.availableInventory <= 0">Add to Cart</button>
     </div>
 
     <h2>Cart</h2>
-    <div v-for="(item, index) in cartAggregated" :key="item.id" style="border:1px solid #999; margin:5px; padding:5px;">
-        <p>{{ item.title }} - {{ item.price }} - qty: {{ item.quantity }}</p>
-        <button @click="removeOneFromCart(item.id)">Remove one</button>
+    <div v-for="(item, index) in cart" :key="index" style="border:1px solid #999; margin:5px; padding:5px;">
+        <p>{{ item.title }} - {{ item.price }}</p>
+        <button @click="removeFromCart(index)">Remove</button>
     </div>
 
     <h2>Customer Details</h2>
-    <p><label>First Name:</label><input type="text" v-model="customer.firstname"></p>
-    <p><label>Last Name:</label><input type="text" v-model="customer.lastname"></p>
-    <p><label>Email:</label><input type="text" v-model="customer.email"></p>
+    <p><label>First Name:</label> <input type="text" v-model="customer.firstname"></p>
+    <p><label>Last Name:</label> <input type="text" v-model="customer.lastname"></p>
+    <p><label>Email:</label> <input type="text" v-model="customer.email"></p>
     <button @click="placeOrder" :disabled="!cart.length || !customer.firstname || !customer.lastname || !customer.email">Place Order</button>
 </div>
 
@@ -46,71 +45,46 @@ new Vue({
     methods: {
         loadLessons() {
             fetch(API + "/lessons")
-                .then(r => r.json())
+                .then(res => res.json())
                 .then(data => this.lessons = data)
-                .catch(e => console.error(e));
+                .catch(err => console.error(err));
         },
         applySearch() {
-            if (!this.searchWord) { this.loadLessons(); return; }
+            if (!this.searchWord) return this.loadLessons();
             fetch(API + "/search?keyword=" + encodeURIComponent(this.searchWord))
-                .then(r => r.json()).then(d => this.lessons = d).catch(e => console.error(e));
+                .then(res => res.json())
+                .then(data => this.lessons = data)
+                .catch(err => console.error(err));
         },
         addToCart(lesson) {
-            this.cart.push({ id: lesson.id, title: lesson.title || lesson.subject, price: Number(lesson.price||0), location: lesson.location });
+            this.cart.push(lesson);
         },
-        removeOneFromCart(id) {
-            const idx = this.cart.findIndex(i => i.id === id);
-            if (idx !== -1) this.cart.splice(idx,1);
-        },
-        cartAggregated() {
-            const map = {};
-            for (const it of this.cart) {
-                if (!map[it.id]) map[it.id] = { id: it.id, title: it.title, price: it.price, location: it.location, quantity: 0 };
-                map[it.id].quantity++;
-            }
-            return Object.values(map);
+        removeFromCart(index) {
+            this.cart.splice(index, 1);
         },
         async placeOrder() {
-            const counts = {};
-            for (const it of this.cart) counts[it.id] = (counts[it.id]||0) + 1;
-            const items = Object.keys(counts).map(id => {
-                const sample = this.cart.find(c => c.id == id);
-                return { id: Number(id), title: sample.title, price: sample.price, location: sample.location, quantity: counts[id] };
-            });
             const order = {
                 customer: { ...this.customer },
-                items,
-                total: items.reduce((s,i) => s + i.price * i.quantity, 0),
+                items: this.cart.map(i => ({ ...i })),
+                total: this.cart.reduce((sum, i) => sum + Number(i.price), 0),
                 date: new Date().toLocaleString()
             };
             try {
                 const res = await fetch(API + "/orders", {
                     method: "POST",
-                    headers: {'Content-Type':'application/json'},
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(order)
                 });
                 const data = await res.json();
-                console.log("Order saved:", data);
-                const w = window.open("","_blank");
-                w.document.write("<h1>Receipt</h1>");
-                w.document.write(`<p>${order.customer.firstname} ${order.customer.lastname}</p>`);
-                w.document.write("<ul>");
-                order.items.forEach(i => w.document.write(`<li>${i.title} x${i.quantity} - ${i.price}</li>`));
-                w.document.write("</ul>");
-                w.document.write(`<p>Total: ${order.total}</p>`);
+                alert("Order placed successfully!");
                 this.cart = [];
-                this.customer = { firstname:'', lastname:'', email:'' };
-            } catch (err) { console.error(err); }
-        }
-    },
-    computed: {
-        cartAggregated() {
-            const map = {};
-            for (const it of this.cart) {
-                if (!map[it.id]) map[it.id] = { id: it.id, title: it.title, price: it.price, location: it.location, quantity: 0 };
-                map[it.id].quantity++;
+                this.customer.firstname = '';
+                this.customer.lastname = '';
+                this.customer.email = '';
+                this.loadLessons();
+            } catch (err) {
+                console.error(err);
             }
-            return Object.values(map);
         }
     },
     created() {

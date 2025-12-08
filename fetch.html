@@ -9,7 +9,13 @@
 <div id="app">
     <h1>Fetch Test</h1>
 
-    <input type="text" v-model="searchWord" placeholder="Search lessons..." @input="searchLessonsBackend" />
+    <!-- Search bar -->
+    <input 
+        type="text" 
+        v-model="searchWord" 
+        placeholder="Search lessons..." 
+        @input="applySearch"
+    />
 
     <div v-for="lesson in lessons" :key="lesson.id" style="border:1px solid #ccc; margin:5px; padding:5px;">
         <h3>{{ lesson.subject }}</h3>
@@ -42,7 +48,7 @@
 </div>
 
 <script>
-const API = "http://localhost:3000";
+const API = "https://coursework-backend-47ve.onrender.com";
 
 new Vue({
     el: "#app",
@@ -66,13 +72,19 @@ new Vue({
                 .catch(err => console.error("Error loading lessons:", err));
         },
 
-        searchLessonsBackend() {
-            fetch(API + "/search?keyword=" + encodeURIComponent(this.searchWord))
-                .then(response => response.json())
-                .then(data => {
-                    this.lessons = data;
-                })
-                .catch(err => console.error("Error searching lessons:", err));
+        /* -----------------------------  
+           Your applySearch() added here  
+        ------------------------------ */
+        applySearch() {
+            if (!this.searchWord) {
+                this.loadLessons();
+                return;
+            }
+
+            fetch(`${API}/search/${encodeURIComponent(this.searchWord)}`)
+                .then(res => res.json())
+                .then(data => this.lessons = data)
+                .catch(err => console.log(err));
         },
 
         addToCart(lesson) {
@@ -84,7 +96,6 @@ new Vue({
         },
 
         async placeOrder() {
-            // Create receipt/order object
             const order = {
                 customer: { ...this.customer },
                 items: this.cart.map(item => ({
@@ -97,7 +108,6 @@ new Vue({
             };
 
             try {
-                // Save to database
                 const response = await fetch(API + "/orders", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -106,7 +116,6 @@ new Vue({
                 const data = await response.json();
                 console.log("Order saved:", data);
 
-                // Show receipt page
                 const receiptWindow = window.open("", "_blank");
                 receiptWindow.document.write(`<h1>Receipt</h1>`);
                 receiptWindow.document.write(`<p><strong>Name:</strong> ${order.customer.firstname} ${order.customer.lastname}</p>`);
@@ -119,7 +128,7 @@ new Vue({
                 receiptWindow.document.write(`</ul>`);
                 receiptWindow.document.write(`<p><strong>Total:</strong> ${order.total}</p>`);
 
-                // Reset cart and customer
+                // Reset cart + customer
                 this.cart = [];
                 this.customer.firstname = '';
                 this.customer.lastname = '';

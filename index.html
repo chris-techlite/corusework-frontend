@@ -38,6 +38,7 @@
         </div>
     </header>
 
+    <!-- SORT CONTROLS -->
     <div v-if="showproduct && !showReceipt" class="sort-controls">
         <select v-model="sortKey">
             <option value="">Sort by...</option>
@@ -50,6 +51,7 @@
     </div>
 
     <main>
+        <!-- LESSONS PAGE -->
         <div v-if="showproduct && !showReceipt">
             <div v-for="Product in sortedProducts" :key="Product.id" class="lesson-box">
                 <figure>
@@ -68,6 +70,7 @@
             </div>
         </div>
 
+        <!-- CHECKOUT PAGE -->
         <div v-else-if="!showReceipt" class="checkout-container-vertical">
             <div class="cart-section">
                 <h2>Shopping Cart</h2>
@@ -104,6 +107,7 @@
             </div>
         </div>
 
+        <!-- RECEIPT PAGE -->
         <div v-else>
             <h2>Receipt</h2>
             <p><strong>Name:</strong> {{ receipt.customer.firstname }} {{ receipt.customer.lastname }}</p>

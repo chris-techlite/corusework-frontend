@@ -5,10 +5,33 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Checkout vertical layout */
+        .checkout-container-vertical {
+            display: flex;
+            flex-direction: column; /* vertical layout */
+            gap: 30px; /* space between cart and customer sections */
+        }
+
+        .cart-section, .customer-section {
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        .lesson-box {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+    </style>
 </head>
 <body>
 <div id="app">
-    <header>
+    <header v-if="!showReceipt">
         <h1>{{ sitename }}</h1>
         <button v-on:click="showCheckout" v-if="cartItemCount > 0">
             {{cartItemCount}} <i class="fa-solid fa-cart-shopping"></i> Check out
@@ -21,7 +44,7 @@
     </header>
 
     <!-- SORT CONTROLS -->
-    <div v-if="showproduct" class="sort-controls">
+    <div v-if="showproduct && !showReceipt" class="sort-controls">
         <select v-model="sortKey">
             <option value="">Sort by...</option>
             <option value="title">Title</option>
@@ -36,7 +59,7 @@
 
     <main>
         <!-- LESSONS PAGE -->
-        <div v-if="showproduct">
+        <div v-if="showproduct && !showReceipt">
             <div v-for="Product in sortedProducts" :key="Product.id" class="lesson-box">
                 <figure>
                     <img :src="Product.image" :alt="Product.title"/>
@@ -54,56 +77,80 @@
             </div>
         </div>
 
-        <!-- CART & CHECKOUT PAGE -->
-        <div v-else>
-            <h2>Shopping Cart</h2>
-            <div v-for="(item, index) in cart" :key="index" class="lesson-box">
-                <h3>{{ item.title }}</h3>
-                <p><strong>Price:</strong> {{ item.price }}</p>
-                <p><strong>Location:</strong> {{ item.location }}</p>
-                <button v-on:click="removeFromCart(index)">Remove</button>
+        <!-- CART & CHECKOUT PAGE (VERTICAL) -->
+        <div v-else-if="!showReceipt" class="checkout-container-vertical">
+            <!-- CART SECTION -->
+            <div class="cart-section">
+                <h2>Shopping Cart</h2>
+                <div v-for="(item, index) in cart" :key="index" class="lesson-box">
+                    <h3>{{ item.title }}</h3>
+                    <p><strong>Price:</strong> {{ item.price }}</p>
+                    <p><strong>Location:</strong> {{ item.location }}</p>
+                    <button v-on:click="removeFromCart(index)">Remove</button>
+                </div>
             </div>
 
-            <h2>Checkout</h2>
-            <p>
-                <label>First Name:</label>
-                <input type="text" v-model.trim="order.firstname"/>
-            </p>
-            <p>
-                <label>Last Name:</label>
-                <input type="text" v-model.trim="order.lastname"/>
-            </p>
-            <p>
-                <label>Address:</label>
-                <input type="text" v-model="order.address"/>
-            </p>
-            <p>
-                <label>City:</label>
-                <input type="text" v-model="order.city"/>
-            </p>
-            <p>
-                <label>State:</label>
-                <select v-model="order.state">
-                    <option disabled value="">Select state</option>
-                    <option v-for="(state, key) in states" :value="state">{{ key }}</option>
-                </select>
-            </p>
-            <p>
-                <label>Zip Code:</label>
-                <input type="number" v-model.number="order.zip"/>
-            </p>
-            <p>
-                <input type="checkbox" id="gift" v-model="order.gift" :true-value="order.sendGift" :false-value="order.dontsendGifts"/>
-                <label for="gift">Ship as gift?</label>
-            </p>
-            <p>
-                <input type="radio" id="home" value="home" v-model="order.method"/>
-                <label for="home">Home</label>
-                <input type="radio" id="business" value="business" v-model="order.method"/>
-                <label for="business">Business</label>
-            </p>
+            <!-- CUSTOMER DETAILS SECTION -->
+            <div class="customer-section">
+                <h2>Checkout</h2>
+                <p>
+                    <label>First Name:</label>
+                    <input type="text" v-model.trim="order.firstname"/>
+                </p>
+                <p>
+                    <label>Last Name:</label>
+                    <input type="text" v-model.trim="order.lastname"/>
+                </p>
+                <p>
+                    <label>Address:</label>
+                    <input type="text" v-model="order.address"/>
+                </p>
+                <p>
+                    <label>City:</label>
+                    <input type="text" v-model="order.city"/>
+                </p>
+                <p>
+                    <label>State:</label>
+                    <select v-model="order.state">
+                        <option disabled value="">Select state</option>
+                        <option v-for="(state, key) in states" :value="state">{{ key }}</option>
+                    </select>
+                </p>
+                <p>
+                    <label>Zip Code:</label>
+                    <input type="number" v-model.number="order.zip"/>
+                </p>
+                <p>
+                    <input type="checkbox" id="gift" v-model="order.gift" :true-value="order.sendGift" :false-value="order.dontsendGifts"/>
+                    <label for="gift">Ship as gift?</label>
+                </p>
+                <p>
+                    <input type="radio" id="home" value="home" v-model="order.method"/>
+                    <label for="home">Home</label>
+                    <input type="radio" id="business" value="business" v-model="order.method"/>
+                    <label for="business">Business</label>
+                </p>
 
-            <button v-on:click="submitForm" :disabled="!validOrder">Place Order</button>
+                <button v-on:click="submitForm" :disabled="!validOrder">Place Order</button>
+            </div>
+        </div>
+
+        <!-- RECEIPT PAGE -->
+        <div v-else>
+            <h2>Receipt</h2>
+            <p><strong>Name:</strong> {{ receipt.customer.firstname }} {{ receipt.customer.lastname }}</p>
+            <p><strong>Address:</strong> {{ receipt.customer.address }}, {{ receipt.customer.city }}, {{ receipt.customer.state }}, {{ receipt.customer.zip }}</p>
+            <p><strong>Shipping Method:</strong> {{ receipt.customer.method }}</p>
+            <p><strong>Gift:</strong> {{ receipt.customer.gift }}</p>
+            <p><strong>Date:</strong> {{ receipt.date }}</p>
+            <h3>Items Ordered:</h3>
+            <ul>
+                <li v-for="item in receipt.items" :key="item.title">
+                    {{ item.title }} | ${{ item.price }} | {{ item.location }}
+                </li>
+            </ul>
+            <p><strong>Total:</strong> ${{ receipt.total }}</p>
+            <button v-on:click="backToShop">Back to Shop</button>
         </div>
     </main>
 </div>
@@ -118,7 +165,9 @@ new Vue({
         products: [],
         searchTerm: '',
         showproduct: true,
+        showReceipt: false,
         cart: [],
+        receipt: {},
         order: {
             firstname: '',
             lastname: '',
@@ -135,6 +184,7 @@ new Vue({
         sortKey: '',
         sortOrder: 'asc'
     },
+
     methods: {
         loadLessons() {
             fetch(API + "/lessons")
@@ -182,8 +232,54 @@ new Vue({
         },
 
         submitForm() {
-            alert("Order submitted successfully!");
-            this.cart = [];
+            const orderPayload = {
+                customer: {
+                    firstname: this.order.firstname,
+                    lastname: this.order.lastname,
+                    address: this.order.address,
+                    city: this.order.city,
+                    state: this.order.state,
+                    zip: this.order.zip,
+                    method: this.order.method,
+                    gift: this.order.gift
+                },
+                items: this.cart.map(item => ({
+                    title: item.title,
+                    price: item.price,
+                    location: item.location
+                })),
+                total: this.cart.reduce((sum, item) => sum + item.price, 0),
+                date: new Date().toLocaleString()
+            };
+
+            fetch(API + '/orders', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(orderPayload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                this.receipt = orderPayload;
+
+            this.cart.forEach(item => {
+            fetch(API + "/lessons/" + item.id, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ availableInventory: item.availableInventory - 1 })
+    })
+    .then(r => r.json())
+    .then(d => console.log("Lesson updated:", d))
+    .catch(err => console.error("Error updating lesson:", err));
+});
+                this.showReceipt = true;
+                this.cart = [];
+                this.showproduct = false;
+            })
+            .catch(err => console.error(err));
+        },
+
+        backToShop() {
+            this.showReceipt = false;
             this.showproduct = true;
             this.order.firstname = '';
             this.order.lastname = '';
@@ -193,12 +289,15 @@ new Vue({
             this.order.state = '';
             this.order.method = 'home';
             this.order.gift = 'do not send as Gifts';
+
+            this.loadLessons();
         },
 
         toggleSortOrder() {
             this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
         }
     },
+
     computed: {
         cartItemCount() { return this.cart.length; },
 
@@ -208,7 +307,7 @@ new Vue({
             return this.order.firstname && this.order.lastname && this.order.address &&
                 this.order.city && this.order.zip && this.order.state &&
                 nameRegex.test(this.order.firstname) && nameRegex.test(this.order.lastname) &&
-                phoneRegex.test(String(this.order.zip));
+                /^[0-9]+$/.test(String(this.order.zip));
         },
 
         sortedProducts() {
@@ -227,6 +326,7 @@ new Vue({
             });
         }
     },
+
     created() {
         this.loadLessons();
     }

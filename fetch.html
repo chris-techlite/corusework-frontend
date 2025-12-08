@@ -9,15 +9,36 @@
 <div id="app">
     <h1>Fetch Test</h1>
 
-    
     <input type="text" v-model="searchWord" placeholder="Search lessons..." @input="searchLessonsBackend" />
 
-    <div v-for="lesson in lessons">
+    <div v-for="lesson in lessons" :key="lesson.id" style="border:1px solid #ccc; margin:5px; padding:5px;">
         <h3>{{ lesson.subject }}</h3>
         <p>Location: {{ lesson.location }}</p>
         <p>Price: {{ lesson.price }}</p>
         <p>Spaces: {{ lesson.space }}</p>
+        <button @click="addToCart(lesson)" :disabled="lesson.space <= 0">Add to Cart</button>
     </div>
+
+    <h2>Cart</h2>
+    <div v-for="(item, index) in cart" :key="index" style="border:1px solid #999; margin:5px; padding:5px;">
+        <p>{{ item.subject }} - {{ item.price }}</p>
+        <button @click="removeFromCart(index)">Remove</button>
+    </div>
+
+    <h2>Customer Details</h2>
+    <p>
+        <label>First Name:</label>
+        <input type="text" v-model="customer.firstname">
+    </p>
+    <p>
+        <label>Last Name:</label>
+        <input type="text" v-model="customer.lastname">
+    </p>
+    <p>
+        <label>Email:</label>
+        <input type="text" v-model="customer.email">
+    </p>
+    <button @click="placeOrder" :disabled="!cart.length || !customer.firstname || !customer.lastname || !customer.email">Place Order</button>
 </div>
 
 <script>
@@ -27,11 +48,15 @@ new Vue({
     el: "#app",
     data: {
         lessons: [],
-        searchWord: ""
+        searchWord: "",
+        cart: [],
+        customer: {
+            firstname: '',
+            lastname: '',
+            email: ''
+        }
     },
     methods: {
-
-        
         loadLessons() {
             fetch(API + "/lessons")
                 .then(response => response.json())
@@ -50,27 +75,60 @@ new Vue({
                 .catch(err => console.error("Error searching lessons:", err));
         },
 
-        submitOrder(order) {
-            return fetch(API + "/orders", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(order)
-            })
-            .then(response => response.json())
-            .catch(err => console.error("Error submitting order:", err));
+        addToCart(lesson) {
+            this.cart.push(lesson);
         },
 
-        
-        updateLessonSpace(id, newSpace) {
-            return fetch(API + "/lessons/" + id, {
-                method: "PUT",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({ space: newSpace })
-            })
-            .then(response => response.json())
-            .catch(err => console.error("Error updating lesson space:", err));
-        }
+        removeFromCart(index) {
+            this.cart.splice(index, 1);
+        },
 
+        async placeOrder() {
+            // Create receipt/order object
+            const order = {
+                customer: { ...this.customer },
+                items: this.cart.map(item => ({
+                    subject: item.subject,
+                    price: item.price,
+                    location: item.location
+                })),
+                total: this.cart.reduce((sum, item) => sum + Number(item.price), 0),
+                date: new Date().toLocaleString()
+            };
+
+            try {
+                // Save to database
+                const response = await fetch(API + "/orders", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(order)
+                });
+                const data = await response.json();
+                console.log("Order saved:", data);
+
+                // Show receipt page
+                const receiptWindow = window.open("", "_blank");
+                receiptWindow.document.write(`<h1>Receipt</h1>`);
+                receiptWindow.document.write(`<p><strong>Name:</strong> ${order.customer.firstname} ${order.customer.lastname}</p>`);
+                receiptWindow.document.write(`<p><strong>Email:</strong> ${order.customer.email}</p>`);
+                receiptWindow.document.write(`<p><strong>Date:</strong> ${order.date}</p>`);
+                receiptWindow.document.write("<h2>Ordered Items:</h2><ul>");
+                order.items.forEach(i => {
+                    receiptWindow.document.write(`<li>${i.subject} - ${i.price} - ${i.location}</li>`);
+                });
+                receiptWindow.document.write(`</ul>`);
+                receiptWindow.document.write(`<p><strong>Total:</strong> ${order.total}</p>`);
+
+                // Reset cart and customer
+                this.cart = [];
+                this.customer.firstname = '';
+                this.customer.lastname = '';
+                this.customer.email = '';
+
+            } catch (err) {
+                console.error("Error placing order:", err);
+            }
+        }
     },
     created() {
         this.loadLessons();

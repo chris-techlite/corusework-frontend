@@ -362,6 +362,46 @@ input, select {
 }
 label {
     color: #000 !important;
+    .checkout-container-vertical {
+    display: flex;
+    flex-direction: column; /* vertical layout */
+    gap: 30px; /* space between cart and customer sections */
+}
+
+.cart-section, .customer-section {
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.lesson-box {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background-color: #fff;
+}
+.checkout-container-vertical {
+    display: flex;
+    flex-direction: column; /* vertical layout */
+    gap: 30px; /* space between cart and customer sections */
+}
+
+.cart-section, .customer-section {
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.lesson-box {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    background-color: #fff;
+}
 }
 
 /* Responsive adjustments */
